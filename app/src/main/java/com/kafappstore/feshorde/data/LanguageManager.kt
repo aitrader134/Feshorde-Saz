@@ -1,6 +1,8 @@
 package com.kafappstore.feshorde.data
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.unit.LayoutDirection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,6 +12,8 @@ enum class AppLanguage(val code: String, val displayName: String, val nativeName
     FA("fa", "Persian", "فارسی"),
     EN("en", "English", "English")
 }
+
+val LocalAppLanguage = compositionLocalOf { AppLanguage.FA }
 
 object LanguageManager {
     private val _currentLanguage = MutableStateFlow(AppLanguage.FA)
@@ -38,15 +42,20 @@ object LanguageManager {
 
     fun isEnglish(): Boolean = _currentLanguage.value == AppLanguage.EN
 
+    @Composable
+    fun isEnglishCurrent(): Boolean = LocalAppLanguage.current == AppLanguage.EN
+
     fun isRtl(): Boolean = _currentLanguage.value == AppLanguage.FA
 
     fun getLayoutDirection(): LayoutDirection {
         return if (isEnglish()) LayoutDirection.Ltr else LayoutDirection.Rtl
     }
 
+    @Composable
     fun formatNumber(number: Any): String {
         val str = number.toString()
-        if (isEnglish()) return str
+        val lang = LocalAppLanguage.current
+        if (lang == AppLanguage.EN) return str
         val persianNumbers = charArrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
         val builder = StringBuilder()
         for (ch in str) {
@@ -59,14 +68,17 @@ object LanguageManager {
         return builder.toString()
     }
 
+    @Composable
     fun formatBytes(bytes: Long): String {
-        if (bytes <= 0) return if (isEnglish()) "0 Bytes" else "۰ بایت"
+        val lang = LocalAppLanguage.current
+        val isEn = lang == AppLanguage.EN
+        if (bytes <= 0) return if (isEn) "0 Bytes" else "۰ بایت"
         val unitsEn = arrayOf("Bytes", "KB", "MB", "GB", "TB")
         val unitsFa = arrayOf("بایت", "کیلوبایت", "مگابایت", "گیگابایت", "ترابایت")
         val digitGroups = (kotlin.math.log10(bytes.toDouble()) / kotlin.math.log10(1024.0)).toInt().coerceIn(0, unitsEn.size - 1)
         val value = bytes / Math.pow(1024.0, digitGroups.toDouble())
         val formattedValue = String.format(java.util.Locale.US, "%.1f", value)
-        return if (isEnglish()) {
+        return if (isEn) {
             "$formattedValue ${unitsEn[digitGroups]}"
         } else {
             val pValue = formatNumber(formattedValue)

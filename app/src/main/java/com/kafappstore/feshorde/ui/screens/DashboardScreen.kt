@@ -193,7 +193,7 @@ fun DashboardScreen(
                             modifier = Modifier.testTag("btn_view_all_history")
                         ) {
                             Text(
-                                text = if (LanguageManager.isEnglish()) "View All" else "مشاهده همه",
+                                text = if (LanguageManager.isEnglishCurrent()) "View All" else "مشاهده همه",
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                 color = RoyalBlue
                             )
@@ -231,7 +231,7 @@ fun DashboardScreen(
                                     )
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Text(
-                                        text = "هنوز فایلی فشرده نشده است",
+                                        text = AppStrings.getString("empty_history"),
                                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -293,7 +293,7 @@ fun DashboardScreen(
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = "${StorageStatsManager.formatBytes(item.compressedSizeBytes)} • کاهش ${StorageStatsManager.toPersianDigits("${item.savedPercentage}")}٪",
+                                        text = "${LanguageManager.formatBytes(item.compressedSizeBytes)} • ${if (LanguageManager.isEnglishCurrent()) "Reduced" else "کاهش"} ${LanguageManager.formatNumber(item.savedPercentage)}٪",
                                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                                         color = GreenToolIcon
                                     )
@@ -305,7 +305,7 @@ fun DashboardScreen(
                                         StorageStatsManager.shareFile(context, file)
                                     }
                                 ) {
-                                    Icon(Icons.Default.Share, contentDescription = "اشتراک", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(Icons.Default.Share, contentDescription = AppStrings.getString("share_file"), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
 
                                 IconButton(
@@ -314,13 +314,13 @@ fun DashboardScreen(
                                         StorageStatsManager.openFile(context, file)
                                     }
                                 ) {
-                                    Icon(Icons.Default.OpenInNew, contentDescription = "باز کردن", tint = RoyalBlue)
+                                    Icon(Icons.Default.OpenInNew, contentDescription = AppStrings.getString("open_file"), tint = RoyalBlue)
                                 }
 
                                 IconButton(
                                     onClick = { onDeleteHistoryFile(item) }
                                 ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "حذف", tint = Color(0xFFEF4444))
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
                                 }
                             }
                         }

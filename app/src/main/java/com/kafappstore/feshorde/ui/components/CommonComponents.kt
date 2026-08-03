@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,11 +80,16 @@ import com.kafappstore.feshorde.data.LanguageManager
 import com.kafappstore.feshorde.ui.theme.RoyalBlueLight
 import java.io.File
 
+import com.kafappstore.feshorde.data.LocalAppLanguage
+
 @Composable
 fun PersianRtlLayout(content: @Composable () -> Unit) {
     val currentLang by LanguageManager.currentLanguage.collectAsState()
-    val direction = LanguageManager.getLayoutDirection()
-    CompositionLocalProvider(LocalLayoutDirection provides direction) {
+    val direction = if (currentLang == AppLanguage.EN) LayoutDirection.Ltr else LayoutDirection.Rtl
+    CompositionLocalProvider(
+        LocalLayoutDirection provides direction,
+        LocalAppLanguage provides currentLang
+    ) {
         content()
     }
 }
@@ -139,23 +145,33 @@ fun AppHeader(
                     )
                 }
 
-                // Quick Language Toggle Chip Button
-                Box(
+                // Quick Language Toggle Chip Button (High contrast, highly visible)
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = RoyalBlue.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, RoyalBlue.copy(alpha = 0.3f)),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(RoyalBlueContainer)
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable {
                             val nextLang = if (currentLang == AppLanguage.FA) AppLanguage.EN else AppLanguage.FA
                             LanguageManager.setLanguage(context, nextLang)
                         }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
                         .testTag("btn_toggle_header_language")
                 ) {
-                    Text(
-                        text = if (currentLang == AppLanguage.FA) "🌐 EN" else "🌐 FA",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = RoyalBlue
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = if (currentLang == AppLanguage.FA) "🌐 English" else "🌐 فارسی",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            ),
+                            color = RoyalBlue
+                        )
+                    }
                 }
             }
         }
