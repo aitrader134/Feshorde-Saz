@@ -1,0 +1,6 @@
+{
+  "name": "فشرده ساز",
+  "description": "اپلیکیشن پیشرفته فشرده‌سازی عکس، ویدیو، صوت و ساخت آرشیو ZIP با مدیریت حافظه و آمار کاهش حجم",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
