@@ -65,6 +65,8 @@ import com.kafappstore.feshorde.ui.theme.AmberToolBg
 import com.kafappstore.feshorde.ui.theme.AmberToolIcon
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 
+import com.kafappstore.feshorde.data.AppStrings
+
 @Composable
 fun ZipCompressorScreen(
     onBackClick: () -> Unit,
@@ -106,7 +108,7 @@ fun ZipCompressorScreen(
         Scaffold(
             topBar = {
                 AppHeader(
-                    title = "آرشیو و فشرده‌سازی ZIP",
+                    title = AppStrings.getString("zip_compressor"),
                     showBackButton = true,
                     onBackClick = onBackClick
                 )

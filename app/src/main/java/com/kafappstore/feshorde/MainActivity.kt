@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.kafappstore.feshorde.data.LanguageManager.init(applicationContext)
         enableEdgeToEdge()
         setContent {
             CompressorTheme {

@@ -7,12 +7,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kafappstore.feshorde.data.LanguageManager
 import com.kafappstore.feshorde.ui.components.CompressProgressDialog
 import com.kafappstore.feshorde.ui.components.SuccessCompressDialog
 import com.kafappstore.feshorde.ui.screens.AudioCompressorScreen
 import com.kafappstore.feshorde.ui.screens.DashboardScreen
 import com.kafappstore.feshorde.ui.screens.HistoryScreen
 import com.kafappstore.feshorde.ui.screens.ImageCompressorScreen
+import com.kafappstore.feshorde.ui.screens.LanguageSelectionScreen
 import com.kafappstore.feshorde.ui.screens.OnboardingScreen
 import com.kafappstore.feshorde.ui.screens.SplashScreen
 import com.kafappstore.feshorde.ui.screens.VideoCompressorScreen
@@ -22,6 +24,7 @@ import com.kafappstore.feshorde.ui.viewmodel.CompressorViewModel
 
 object NavRoutes {
     const val SPLASH = "splash"
+    const val LANGUAGE_SELECTION = "language_selection"
     const val ONBOARDING = "onboarding"
     const val DASHBOARD = "dashboard"
     const val IMAGE = "image"
@@ -47,10 +50,27 @@ fun AppNavigation(
     ) {
         composable(NavRoutes.SPLASH) {
             SplashScreen(
-                onNavigateNext = { isFirstTime ->
-                    val targetRoute = if (isFirstTime) NavRoutes.ONBOARDING else NavRoutes.DASHBOARD
+                onNavigateNext = { isLanguageSet, isFirstTime ->
+                    val targetRoute = when {
+                        !isLanguageSet -> NavRoutes.LANGUAGE_SELECTION
+                        isFirstTime -> NavRoutes.ONBOARDING
+                        else -> NavRoutes.DASHBOARD
+                    }
                     navController.navigate(targetRoute) {
                         popUpTo(NavRoutes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(NavRoutes.LANGUAGE_SELECTION) {
+            LanguageSelectionScreen(
+                onLanguageSelected = {
+                    val prefs = navController.context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                    val hasSeenOnboarding = prefs.getBoolean("has_seen_onboarding", false)
+                    val targetRoute = if (!hasSeenOnboarding) NavRoutes.ONBOARDING else NavRoutes.DASHBOARD
+                    navController.navigate(targetRoute) {
+                        popUpTo(NavRoutes.LANGUAGE_SELECTION) { inclusive = true }
                     }
                 }
             )

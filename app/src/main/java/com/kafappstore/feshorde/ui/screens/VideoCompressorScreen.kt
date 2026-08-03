@@ -55,6 +55,8 @@ import com.kafappstore.feshorde.ui.theme.OrangeToolBg
 import com.kafappstore.feshorde.ui.theme.OrangeToolIcon
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 
+import com.kafappstore.feshorde.data.AppStrings
+
 @Composable
 fun VideoCompressorScreen(
     onBackClick: () -> Unit,
@@ -84,7 +86,7 @@ fun VideoCompressorScreen(
         Scaffold(
             topBar = {
                 AppHeader(
-                    title = "فشرده‌سازی ویدیو",
+                    title = AppStrings.getString("video_compressor"),
                     showBackButton = true,
                     onBackClick = onBackClick
                 )

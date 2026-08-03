@@ -62,6 +62,9 @@ import com.kafappstore.feshorde.ui.theme.PurpleToolIcon
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 import java.io.File
 
+import com.kafappstore.feshorde.data.AppStrings
+import com.kafappstore.feshorde.data.LanguageManager
+
 @Composable
 fun DashboardScreen(
     totalBytesSaved: Long,
@@ -80,7 +83,7 @@ fun DashboardScreen(
     PersianRtlLayout {
         Scaffold(
             topBar = {
-                AppHeader(title = "فشرده ساز رسانه و فایل")
+                AppHeader(title = AppStrings.getString("app_name"))
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { innerPadding ->
@@ -91,7 +94,7 @@ fun DashboardScreen(
             ) {
                 item {
                     StatCard(
-                        totalSavedText = StorageStatsManager.formatBytes(totalBytesSaved),
+                        totalSavedText = LanguageManager.formatBytes(totalBytesSaved),
                         totalFilesCount = totalFilesCount,
                         usedStoragePercent = storageInfo.usedPercentage
                     )
@@ -100,7 +103,7 @@ fun DashboardScreen(
                 item {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                         Text(
-                            text = "ابزارهای فشرده‌سازی",
+                            text = AppStrings.getString("tools"),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp
@@ -115,8 +118,8 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             GridToolCard(
-                                title = "فشرده‌سازی عکس",
-                                subtitle = "کاهش حجم JPG, PNG, WebP تا ۹۰٪",
+                                title = AppStrings.getString("image_compressor"),
+                                subtitle = AppStrings.getString("image_desc"),
                                 icon = Icons.Default.Image,
                                 containerBg = PurpleToolBg,
                                 iconColor = PurpleToolIcon,
@@ -126,8 +129,8 @@ fun DashboardScreen(
                             )
 
                             GridToolCard(
-                                title = "فشرده‌سازی ویدیو",
-                                subtitle = "کاهش رزولوشن MP4 و بیت‌ریت",
+                                title = AppStrings.getString("video_compressor"),
+                                subtitle = AppStrings.getString("video_desc"),
                                 icon = Icons.Default.Videocam,
                                 containerBg = OrangeToolBg,
                                 iconColor = OrangeToolIcon,
@@ -144,8 +147,8 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             GridToolCard(
-                                title = "فشرده‌سازی صوت",
-                                subtitle = "تنظیم بیت‌ریت MP3, AAC",
+                                title = AppStrings.getString("audio_compressor"),
+                                subtitle = AppStrings.getString("audio_desc"),
                                 icon = Icons.Default.MusicNote,
                                 containerBg = GreenToolBg,
                                 iconColor = GreenToolIcon,
@@ -155,8 +158,8 @@ fun DashboardScreen(
                             )
 
                             GridToolCard(
-                                title = "فایل‌های ZIP",
-                                subtitle = "ساخت و استخراج آرشیو فشرده",
+                                title = AppStrings.getString("zip_compressor"),
+                                subtitle = AppStrings.getString("zip_desc"),
                                 icon = Icons.Default.FolderZip,
                                 containerBg = AmberToolBg,
                                 iconColor = AmberToolIcon,
@@ -177,7 +180,7 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "تاریخچه اخیر",
+                            text = AppStrings.getString("history"),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp
@@ -190,7 +193,7 @@ fun DashboardScreen(
                             modifier = Modifier.testTag("btn_view_all_history")
                         ) {
                             Text(
-                                text = "مشاهده همه",
+                                text = if (LanguageManager.isEnglish()) "View All" else "مشاهده همه",
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                 color = RoyalBlue
                             )

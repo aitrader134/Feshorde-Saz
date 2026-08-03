@@ -65,6 +65,8 @@ import com.kafappstore.feshorde.ui.theme.PurpleToolBg
 import com.kafappstore.feshorde.ui.theme.PurpleToolIcon
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 
+import com.kafappstore.feshorde.data.AppStrings
+
 @Composable
 fun ImageCompressorScreen(
     onBackClick: () -> Unit,
@@ -96,7 +98,7 @@ fun ImageCompressorScreen(
         Scaffold(
             topBar = {
                 AppHeader(
-                    title = "فشرده‌سازی عکس",
+                    title = AppStrings.getString("image_compressor"),
                     showBackButton = true,
                     onBackClick = onBackClick
                 )

@@ -54,6 +54,8 @@ import com.kafappstore.feshorde.ui.theme.GreenToolBg
 import com.kafappstore.feshorde.ui.theme.GreenToolIcon
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 
+import com.kafappstore.feshorde.data.AppStrings
+
 @Composable
 fun AudioCompressorScreen(
     onBackClick: () -> Unit,
@@ -83,7 +85,7 @@ fun AudioCompressorScreen(
         Scaffold(
             topBar = {
                 AppHeader(
-                    title = "فشرده‌سازی موزیک و صوت",
+                    title = AppStrings.getString("audio_compressor"),
                     showBackButton = true,
                     onBackClick = onBackClick
                 )

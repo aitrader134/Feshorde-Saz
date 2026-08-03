@@ -66,6 +66,9 @@ import com.kafappstore.feshorde.ui.theme.PurpleToolBg
 import com.kafappstore.feshorde.ui.theme.PurpleToolIcon
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 
+import com.kafappstore.feshorde.data.AppStrings
+import com.kafappstore.feshorde.data.LanguageManager
+
 data class OnboardingPageData(
     val title: String,
     val description: String,
@@ -82,33 +85,63 @@ fun OnboardingScreen(
 ) {
     val context = LocalContext.current
     var currentPageIndex by remember { mutableIntStateOf(0) }
+    val isEn = LanguageManager.isEnglish()
 
-    val pages = listOf(
-        OnboardingPageData(
-            title = "فشرده‌سازی هوشمند عکس و ویدیو",
-            description = "کاهش حجم تصاویر (JPG, PNG, WebP) و ویدیوها (MP4, MKV) تا ۹۰٪ بدون افت کیفیت محسوس با کنترل دقیق کیفیت و رزولوشن.",
-            icon = Icons.Default.PermMedia,
-            containerBg = PurpleToolBg,
-            iconColor = PurpleToolIcon,
-            badgeText = "گالری و رسانه"
-        ),
-        OnboardingPageData(
-            title = "بهینه‌سازی صوت و مدیریت ZIP",
-            description = "تنظیم بیت‌ریت و تبدیل فایل‌های صوتی به حالت مونو، همراه با امکان ساخت آرشیو ZIP فشرده و استخراج آسان فایل‌ها.",
-            icon = Icons.Default.FolderZip,
-            containerBg = AmberToolBg,
-            iconColor = AmberToolIcon,
-            badgeText = "موزیک و فشرده‌سازی ZIP"
-        ),
-        OnboardingPageData(
-            title = "آمار صرفه‌جویی و مدیریت فایل",
-            description = "مشاهده میزان دقیق حافظه آزاد شده، دسترسی سریع به فایل‌های فشرده شده، و اشتراک‌گذاری یا باز کردن مستقیم فایل‌ها.",
-            icon = Icons.Default.Memory,
-            containerBg = GreenToolBg,
-            iconColor = GreenToolIcon,
-            badgeText = "آمار و تاریخچه"
+    val pages = if (isEn) {
+        listOf(
+            OnboardingPageData(
+                title = "Smart Photo & Video Compression",
+                description = "Reduce image (JPG, PNG, WebP) and video (MP4, MKV) size up to 90% without quality loss.",
+                icon = Icons.Default.PermMedia,
+                containerBg = PurpleToolBg,
+                iconColor = PurpleToolIcon,
+                badgeText = "Gallery & Media"
+            ),
+            OnboardingPageData(
+                title = "Audio Optimization & ZIP Archives",
+                description = "Adjust bitrate and create compressed ZIP archives or extract files easily.",
+                icon = Icons.Default.FolderZip,
+                containerBg = AmberToolBg,
+                iconColor = AmberToolIcon,
+                badgeText = "Audio & ZIP"
+            ),
+            OnboardingPageData(
+                title = "Storage Stats & File Management",
+                description = "Track storage saved, access recent compressed files, and share instantly.",
+                icon = Icons.Default.Memory,
+                containerBg = GreenToolBg,
+                iconColor = GreenToolIcon,
+                badgeText = "Stats & History"
+            )
         )
-    )
+    } else {
+        listOf(
+            OnboardingPageData(
+                title = "فشرده‌سازی هوشمند عکس و ویدیو",
+                description = "کاهش حجم تصاویر (JPG, PNG, WebP) و ویدیوها (MP4, MKV) تا ۹۰٪ بدون افت کیفیت محسوس با کنترل دقیق کیفیت و رزولوشن.",
+                icon = Icons.Default.PermMedia,
+                containerBg = PurpleToolBg,
+                iconColor = PurpleToolIcon,
+                badgeText = "گالری و رسانه"
+            ),
+            OnboardingPageData(
+                title = "بهینه‌سازی صوت و مدیریت ZIP",
+                description = "تنظیم بیت‌ریت و تبدیل فایل‌های صوتی به حالت مونو، همراه با امکان ساخت آرشیو ZIP فشرده و استخراج آسان فایل‌ها.",
+                icon = Icons.Default.FolderZip,
+                containerBg = AmberToolBg,
+                iconColor = AmberToolIcon,
+                badgeText = "موزیک و فشرده‌سازی ZIP"
+            ),
+            OnboardingPageData(
+                title = "آمار صرفه‌جویی و مدیریت فایل",
+                description = "مشاهده میزان دقیق حافظه آزاد شده، دسترسی سریع به فایل‌های فشرده شده، و اشتراک‌گذاری یا باز کردن مستقیم فایل‌ها.",
+                icon = Icons.Default.Memory,
+                containerBg = GreenToolBg,
+                iconColor = GreenToolIcon,
+                badgeText = "آمار و تاریخچه"
+            )
+        )
+    }
 
     fun completeOnboarding() {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
@@ -136,7 +169,7 @@ fun OnboardingScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "راهنمای برنامه (${currentPageIndex + 1} از ${pages.size})",
+                        text = if (isEn) "Guide (${currentPageIndex + 1} of ${pages.size})" else "راهنمای برنامه (${LanguageManager.formatNumber(currentPageIndex + 1)} از ${LanguageManager.formatNumber(pages.size)})",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -147,7 +180,7 @@ fun OnboardingScreen(
                             modifier = Modifier.testTag("btn_skip_onboarding")
                         ) {
                             Text(
-                                text = "رد کردن",
+                                text = AppStrings.getString("skip"),
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -302,12 +335,12 @@ fun OnboardingScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "قبلی",
+                                    contentDescription = AppStrings.getString("previous"),
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "قبلی",
+                                    text = AppStrings.getString("previous"),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                                 )
                             }
@@ -329,7 +362,7 @@ fun OnboardingScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue)
                         ) {
                             Text(
-                                text = if (currentPageIndex == pages.size - 1) "شروع به کار با برنامه" else "بعدی",
+                                text = if (currentPageIndex == pages.size - 1) AppStrings.getString("start_app") else AppStrings.getString("next"),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color.White
                             )

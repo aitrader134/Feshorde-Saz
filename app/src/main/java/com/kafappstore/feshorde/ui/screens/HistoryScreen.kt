@@ -72,6 +72,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import com.kafappstore.feshorde.data.AppStrings
+
 @Composable
 fun HistoryScreen(
     historyFiles: List<CompressedFileEntity>,
@@ -102,7 +104,7 @@ fun HistoryScreen(
         Scaffold(
             topBar = {
                 AppHeader(
-                    title = "تاریخچه فایل‌های فشرده شده",
+                    title = AppStrings.getString("history"),
                     showBackButton = true,
                     onBackClick = onBackClick
                 )
@@ -118,7 +120,7 @@ fun HistoryScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("جستجو در فایل‌های فشرده...") },
+                        placeholder = { Text(AppStrings.getString("search_history")) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier
                             .fillMaxWidth()

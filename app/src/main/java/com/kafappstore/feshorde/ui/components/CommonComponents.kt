@@ -72,12 +72,18 @@ import com.kafappstore.feshorde.ui.theme.PurpleToolIcon
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 import com.kafappstore.feshorde.ui.theme.RoyalBlueContainer
 import com.kafappstore.feshorde.ui.theme.RoyalBlueDark
+import androidx.compose.runtime.collectAsState
+import com.kafappstore.feshorde.data.AppLanguage
+import com.kafappstore.feshorde.data.AppStrings
+import com.kafappstore.feshorde.data.LanguageManager
 import com.kafappstore.feshorde.ui.theme.RoyalBlueLight
 import java.io.File
 
 @Composable
 fun PersianRtlLayout(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    val currentLang by LanguageManager.currentLanguage.collectAsState()
+    val direction = LanguageManager.getLayoutDirection()
+    CompositionLocalProvider(LocalLayoutDirection provides direction) {
         content()
     }
 }
@@ -88,6 +94,9 @@ fun AppHeader(
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val currentLang by LanguageManager.currentLanguage.collectAsState()
+
     PersianRtlLayout {
         Surface(
             color = MaterialTheme.colorScheme.surface,
@@ -107,7 +116,7 @@ fun AppHeader(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "بازگشت",
+                            contentDescription = AppStrings.getString("back"),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -124,20 +133,26 @@ fun AppHeader(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "ابزار فشرده‌سازی و مدیریت فایل",
+                        text = AppStrings.getString("app_subtitle"),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
+                // Quick Language Toggle Chip Button
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(RoyalBlueContainer)
+                        .clickable {
+                            val nextLang = if (currentLang == AppLanguage.FA) AppLanguage.EN else AppLanguage.FA
+                            LanguageManager.setLanguage(context, nextLang)
+                        }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .testTag("btn_toggle_header_language")
                 ) {
                     Text(
-                        text = "فشرده‌ساز حرفه‌ای",
+                        text = if (currentLang == AppLanguage.FA) "🌐 EN" else "🌐 FA",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = RoyalBlue
                     )
@@ -153,6 +168,8 @@ fun StatCard(
     totalFilesCount: Int,
     usedStoragePercent: Int
 ) {
+    val currentLang by LanguageManager.currentLanguage.collectAsState()
+
     PersianRtlLayout {
         Card(
             modifier = Modifier
@@ -186,7 +203,7 @@ fun StatCard(
                     ) {
                         Column {
                             Text(
-                                text = "فضای آزاد شده",
+                                text = AppStrings.getString("storage_saved"),
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                 color = Color.White.copy(alpha = 0.85f)
                             )
@@ -209,13 +226,13 @@ fun StatCard(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = StorageStatsManager.toPersianDigits("$totalFilesCount"),
+                                    text = LanguageManager.formatNumber(totalFilesCount),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = Color.White
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "فایل فشرده",
+                                    text = AppStrings.getString("optimized_files"),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color.White.copy(alpha = 0.9f)
                                 )
@@ -231,7 +248,7 @@ fun StatCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "مصرف حافظه دستگاه: ${StorageStatsManager.toPersianDigits("$usedStoragePercent")}٪",
+                            text = "${AppStrings.getString("total_storage_used")}: ${LanguageManager.formatNumber(usedStoragePercent)}%",
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -372,7 +389,7 @@ fun CompressProgressDialog(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = message,
+                        text = if (message == "در حال فشرده‌سازی...") AppStrings.getString("compressing") else message,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
@@ -393,7 +410,7 @@ fun CompressProgressDialog(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "${StorageStatsManager.toPersianDigits("${(percentage * 100).toInt()}")}٪",
+                        text = "${LanguageManager.formatNumber((percentage * 100).toInt())}%",
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = RoyalBlue
                     )
@@ -432,7 +449,7 @@ fun SuccessCompressDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "موفقیت",
+                            contentDescription = AppStrings.getString("success"),
                             tint = GreenToolIcon,
                             modifier = Modifier.size(40.dp)
                         )
@@ -441,7 +458,7 @@ fun SuccessCompressDialog(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "فشرده‌سازی با موفقیت انجام شد!",
+                        text = AppStrings.getString("success"),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
@@ -456,7 +473,7 @@ fun SuccessCompressDialog(
                             .padding(horizontal = 16.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = "${StorageStatsManager.toPersianDigits("${fileEntity.savedPercentage}")}٪ کاهش حجم",
+                            text = "${LanguageManager.formatNumber(fileEntity.savedPercentage)}% ${AppStrings.getString("saved_amount")}",
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.ExtraBold),
                             color = GreenToolIcon
                         )
@@ -477,12 +494,12 @@ fun SuccessCompressDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "حجم اولیه:",
+                                    text = AppStrings.getString("original_size") + ":",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    text = StorageStatsManager.formatBytes(fileEntity.originalSizeBytes),
+                                    text = LanguageManager.formatBytes(fileEntity.originalSizeBytes),
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -493,12 +510,12 @@ fun SuccessCompressDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "حجم جدید:",
+                                    text = AppStrings.getString("compressed_size") + ":",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    text = StorageStatsManager.formatBytes(fileEntity.compressedSizeBytes),
+                                    text = LanguageManager.formatBytes(fileEntity.compressedSizeBytes),
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                     color = GreenToolIcon
                                 )
@@ -531,7 +548,7 @@ fun SuccessCompressDialog(
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("اشتراک")
+                            Text(AppStrings.getString("share_file"))
                         }
 
                         Button(
@@ -546,7 +563,7 @@ fun SuccessCompressDialog(
                         ) {
                             Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("باز کردن", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text(AppStrings.getString("open_file"), color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -560,7 +577,7 @@ fun SuccessCompressDialog(
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-                        Text("تایید", color = MaterialTheme.colorScheme.onSurface)
+                        Text(AppStrings.getString("close"), color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }

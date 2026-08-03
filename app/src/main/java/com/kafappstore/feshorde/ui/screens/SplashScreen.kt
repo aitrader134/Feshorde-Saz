@@ -42,11 +42,13 @@ import androidx.compose.ui.unit.sp
 import com.kafappstore.feshorde.ui.components.PersianRtlLayout
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
 import com.kafappstore.feshorde.ui.theme.RoyalBlueDark
+import com.kafappstore.feshorde.data.AppStrings
+import com.kafappstore.feshorde.data.LanguageManager
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    onNavigateNext: (isFirstTime: Boolean) -> Unit
+    onNavigateNext: (isLanguageSet: Boolean, isFirstTime: Boolean) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -65,8 +67,9 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         delay(1800)
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val isLanguageSet = LanguageManager.isLanguageSet(context)
         val hasSeenOnboarding = prefs.getBoolean("has_seen_onboarding", false)
-        onNavigateNext(!hasSeenOnboarding)
+        onNavigateNext(isLanguageSet, !hasSeenOnboarding)
     }
 
     PersianRtlLayout {
@@ -105,7 +108,7 @@ fun SplashScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Compress,
-                        contentDescription = "لوگو",
+                        contentDescription = "Logo",
                         tint = Color.White,
                         modifier = Modifier.size(64.dp)
                     )
@@ -114,7 +117,7 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
-                    text = "فشرده‌ساز رسانه و فایل",
+                    text = AppStrings.getString("app_name"),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
@@ -125,7 +128,7 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "کاهش حجم حرفه‌ای عکس، ویدیو، صوت و ZIP",
+                    text = AppStrings.getString("app_description_splash"),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium
                     ),
@@ -143,7 +146,7 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "در حال آماد‌ه‌سازی...",
+                    text = AppStrings.getString("preparing"),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
