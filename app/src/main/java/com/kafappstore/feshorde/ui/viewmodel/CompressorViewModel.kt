@@ -119,7 +119,7 @@ class CompressorViewModel(application: Application) : AndroidViewModel(applicati
                     compressedSizeBytes = result.compressedSizeBytes,
                     savedPercentage = result.savedPercentage,
                     format = config.containerFormat,
-                    detailsInfo = "رزولوشن: ${result.width}x${result.height} | کیفیت: ${config.qualityPreset}"
+                    detailsInfo = "رزولوشن: ${result.width}x${result.height} | حالت: ${if (config.mode == "PRESET") config.presetType else "${config.customBitrateKbps}kbps"}"
                 )
                 repository.saveCompressedFile(entity)
 
