@@ -13,12 +13,16 @@ import com.kafappstore.feshorde.ui.screens.AudioCompressorScreen
 import com.kafappstore.feshorde.ui.screens.DashboardScreen
 import com.kafappstore.feshorde.ui.screens.HistoryScreen
 import com.kafappstore.feshorde.ui.screens.ImageCompressorScreen
+import com.kafappstore.feshorde.ui.screens.OnboardingScreen
+import com.kafappstore.feshorde.ui.screens.SplashScreen
 import com.kafappstore.feshorde.ui.screens.VideoCompressorScreen
 import com.kafappstore.feshorde.ui.screens.ZipCompressorScreen
 import com.kafappstore.feshorde.ui.viewmodel.CompressionUiState
 import com.kafappstore.feshorde.ui.viewmodel.CompressorViewModel
 
 object NavRoutes {
+    const val SPLASH = "splash"
+    const val ONBOARDING = "onboarding"
     const val DASHBOARD = "dashboard"
     const val IMAGE = "image"
     const val VIDEO = "video"
@@ -39,8 +43,29 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = NavRoutes.DASHBOARD
+        startDestination = NavRoutes.SPLASH
     ) {
+        composable(NavRoutes.SPLASH) {
+            SplashScreen(
+                onNavigateNext = { isFirstTime ->
+                    val targetRoute = if (isFirstTime) NavRoutes.ONBOARDING else NavRoutes.DASHBOARD
+                    navController.navigate(targetRoute) {
+                        popUpTo(NavRoutes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(NavRoutes.ONBOARDING) {
+            OnboardingScreen(
+                onFinishOnboarding = {
+                    navController.navigate(NavRoutes.DASHBOARD) {
+                        popUpTo(NavRoutes.ONBOARDING) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(NavRoutes.DASHBOARD) {
             DashboardScreen(
                 totalBytesSaved = totalBytesSaved ?: 0L,

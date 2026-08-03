@@ -124,7 +124,7 @@ fun AppHeader(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "com.kafappstore.feshorde",
+                        text = "ابزار فشرده‌سازی و مدیریت فایل",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
