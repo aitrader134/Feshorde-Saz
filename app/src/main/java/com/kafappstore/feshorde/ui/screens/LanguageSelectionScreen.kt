@@ -1,6 +1,5 @@
 package com.kafappstore.feshorde.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,19 +36,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kafappstore.feshorde.data.AppLanguage
-import com.kafappstore.feshorde.data.AppStrings
 import com.kafappstore.feshorde.data.LanguageManager
 import com.kafappstore.feshorde.ui.components.PersianRtlLayout
 import com.kafappstore.feshorde.ui.theme.RoyalBlue
-import com.kafappstore.feshorde.ui.theme.RoyalBlueContainer
 
 @Composable
 fun LanguageSelectionScreen(
@@ -72,46 +68,48 @@ fun LanguageSelectionScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Header
+                // Header section
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(top = 28.dp)
+                    modifier = Modifier.padding(top = 16.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(RoyalBlueContainer),
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        shape = CircleShape,
+                        color = RoyalBlue.copy(alpha = 0.12f),
+                        modifier = Modifier.size(84.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Language,
-                            contentDescription = "زبان / Language",
-                            tint = RoyalBlue,
-                            modifier = Modifier.size(42.dp)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Translate,
+                                contentDescription = "Language / زبان",
+                                tint = RoyalBlue,
+                                modifier = Modifier.size(44.dp)
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = "زبان برنامه را انتخاب کنید\nSelect App Language",
+                        text = "انتخاب زبان / Select Language",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            lineHeight = 28.sp
+                            fontSize = 22.sp
                         ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "زبان مورد نظر خود را جهت ادامه انتخاب نمایید\nChoose your preferred language to continue",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = "لطفاً زبان مورد نظر خود را انتخاب کنید\nPlease select your preferred language",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp
+                        ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                 }
 
@@ -122,8 +120,10 @@ fun LanguageSelectionScreen(
                 ) {
                     // Persian Option Card
                     LanguageCard(
-                        title = "فارسی (Persian)",
-                        subtitle = "رابط کاربری راست‌چین فارسی",
+                        languageCode = "فا",
+                        nativeTitle = "فارسی",
+                        englishSubtitle = "Persian",
+                        description = "رابط کاربری راست‌چین (RTL)",
                         isSelected = currentLang == AppLanguage.FA,
                         onClick = {
                             LanguageManager.setLanguage(context, AppLanguage.FA)
@@ -133,8 +133,10 @@ fun LanguageSelectionScreen(
 
                     // English Option Card
                     LanguageCard(
-                        title = "English (انگلیسی)",
-                        subtitle = "Left-to-Right English interface",
+                        languageCode = "EN",
+                        nativeTitle = "English",
+                        englishSubtitle = "انگلیسی",
+                        description = "Left-to-Right interface (LTR)",
                         isSelected = currentLang == AppLanguage.EN,
                         onClick = {
                             LanguageManager.setLanguage(context, AppLanguage.EN)
@@ -143,20 +145,20 @@ fun LanguageSelectionScreen(
                     )
                 }
 
-                // Continue Button
+                // Confirm / Continue Button
                 Button(
                     onClick = {
                         onLanguageSelected()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp)
+                        .height(56.dp)
                         .testTag("btn_confirm_language"),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue)
                 ) {
                     Text(
-                        text = if (currentLang == AppLanguage.EN) "Continue" else "ادامه",
+                        text = if (currentLang == AppLanguage.EN) "Confirm & Continue" else "تایید و ادامه",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = Color.White
                     )
@@ -164,7 +166,8 @@ fun LanguageSelectionScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -174,12 +177,26 @@ fun LanguageSelectionScreen(
 
 @Composable
 private fun LanguageCard(
-    title: String,
-    subtitle: String,
+    languageCode: String,
+    nativeTitle: String,
+    englishSubtitle: String,
+    description: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     tag: String
 ) {
+    val cardBg = if (isSelected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+
+    val borderColor = if (isSelected) {
+        RoyalBlue
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,35 +204,76 @@ private fun LanguageCard(
             .clickable { onClick() }
             .testTag(tag),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) RoyalBlueContainer else MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         border = BorderStroke(
-            width = if (isSelected) 2.dp else 1.dp,
-            color = if (isSelected) RoyalBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-        )
+            width = if (isSelected) 2.5.dp else 1.5.dp,
+            color = borderColor
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Language Badge Icon Box
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isSelected) RoyalBlue else MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.size(50.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = languageCode,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 17.sp
+                            ),
+                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Title and Subtitles
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = nativeTitle,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            ),
+                            color = if (isSelected) RoyalBlue else MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "($englishSubtitle)",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Checkmark or Selection Circle
             Box(
                 modifier = Modifier
                     .size(28.dp)
@@ -231,12 +289,13 @@ private fun LanguageCard(
                 if (isSelected) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = null,
+                        contentDescription = "Selected",
                         tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
         }
     }
 }
+
