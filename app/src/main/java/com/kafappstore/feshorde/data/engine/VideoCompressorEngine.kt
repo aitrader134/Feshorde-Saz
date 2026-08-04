@@ -128,8 +128,9 @@ class VideoCompressorEngine(private val context: Context) {
             outH = (rawH * scale).toInt()
         }
 
-        outW = ((outW / 2) * 2).coerceAtLeast(16)
-        outH = ((outH / 2) * 2).coerceAtLeast(16)
+        // Align dimensions to 16-pixel macroblock boundaries to prevent green/pink chroma buffer corruption
+        outW = ((outW / 16) * 16).coerceAtLeast(16)
+        outH = ((outH / 16) * 16).coerceAtLeast(16)
 
         // Calculate target bitrate
         val targetBitrate = if (config.mode == "CUSTOM") {
@@ -313,7 +314,12 @@ class VideoCompressorEngine(private val context: Context) {
                         isDecoderEOS = true
                         encoder.signalEndOfInputStream()
                     }
-                    decoder.releaseOutputBuffer(outIndex, render)
+                    if (render) {
+                        val renderTimestampNs = bufferInfo.presentationTimeUs * 1000L
+                        decoder.releaseOutputBuffer(outIndex, renderTimestampNs)
+                    } else {
+                        decoder.releaseOutputBuffer(outIndex, false)
+                    }
                 }
             }
 
