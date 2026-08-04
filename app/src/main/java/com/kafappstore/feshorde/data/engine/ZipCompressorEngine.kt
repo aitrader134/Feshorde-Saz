@@ -48,7 +48,7 @@ class ZipCompressorEngine(private val context: Context) {
 
         onProgress(0.05f)
 
-        val outputDir = File(context.cacheDir, "compressed_zips").apply { mkdirs() }
+        val outputDir = StorageStatsManager.getPublicOutputDir(context, "ZIP")
         val sanitizedName = if (config.zipName.endsWith(".zip")) config.zipName else "${config.zipName}.zip"
         val outputFile = File(outputDir, "${System.currentTimeMillis()}_$sanitizedName")
 
@@ -84,6 +84,7 @@ class ZipCompressorEngine(private val context: Context) {
         zipOut.close()
 
         onProgress(0.98f)
+        StorageStatsManager.scanMediaFile(context, outputFile)
 
         val compressedSize = outputFile.length()
         val savedPercentage = if (originalTotalSize > 0) {

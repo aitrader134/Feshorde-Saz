@@ -35,7 +35,7 @@ class AudioCompressorEngine(private val context: Context) {
         val inputStream: InputStream = context.contentResolver.openInputStream(uri)
             ?: throw IllegalArgumentException("امکان باز کردن فایل صوتی وجود ندارد")
 
-        val outputDir = File(context.cacheDir, "compressed_audio").apply { mkdirs() }
+        val outputDir = StorageStatsManager.getPublicOutputDir(context, "AUDIO")
         val ext = when (config.format.uppercase()) {
             "AAC", "M4A" -> ".m4a"
             "WAV" -> ".wav"
@@ -88,6 +88,7 @@ class AudioCompressorEngine(private val context: Context) {
         }
 
         onProgress(0.95f)
+        StorageStatsManager.scanMediaFile(context, outputFile)
 
         val compressedSize = outputFile.length()
         val savedPercentage = if (originalSize > 0) {

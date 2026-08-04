@@ -117,7 +117,7 @@ class ImageCompressorEngine(private val context: Context) {
         var quality = config.quality
         val targetSize = config.targetMaxSizeBytes
 
-        val outputDir = File(context.cacheDir, "compressed_images").apply { mkdirs() }
+        val outputDir = StorageStatsManager.getPublicOutputDir(context, "IMAGE")
         val ext = when (config.format) {
             Bitmap.CompressFormat.PNG -> ".png"
             Bitmap.CompressFormat.WEBP -> ".webp"
@@ -140,6 +140,8 @@ class ImageCompressorEngine(private val context: Context) {
         FileOutputStream(outputFile).use { fos ->
             baos.writeTo(fos)
         }
+
+        StorageStatsManager.scanMediaFile(context, outputFile)
 
         val compressedSize = outputFile.length()
         val savedPercentage = if (originalSize > 0) {

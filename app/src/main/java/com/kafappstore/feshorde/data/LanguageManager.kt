@@ -31,12 +31,15 @@ object LanguageManager {
 
     fun isLanguageSet(context: Context): Boolean {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        return prefs.contains("app_language")
+        return prefs.getBoolean("is_language_configured", false) || prefs.contains("app_language")
     }
 
     fun setLanguage(context: Context, language: AppLanguage) {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putString("app_language", language.code).apply()
+        prefs.edit()
+            .putString("app_language", language.code)
+            .putBoolean("is_language_configured", true)
+            .apply()
         _currentLanguage.value = language
     }
 

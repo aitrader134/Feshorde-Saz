@@ -134,6 +134,37 @@ object StorageStatsManager {
         }
     }
 
+    fun getPublicOutputDir(context: Context, fileType: String, subFolderName: String = "Feshorde"): File {
+        val baseDir = when (fileType.uppercase()) {
+            "VIDEO" -> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
+            "IMAGE" -> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            "AUDIO" -> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+            else -> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        }
+
+        val targetDir = if (baseDir != null && (baseDir.exists() || baseDir.mkdirs())) {
+            File(baseDir, subFolderName)
+        } else {
+            File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), subFolderName)
+        }
+
+        if (!targetDir.exists()) {
+            targetDir.mkdirs()
+        }
+        return targetDir
+    }
+
+    fun scanMediaFile(context: Context, file: File, mimeType: String? = null) {
+        try {
+            android.media.MediaScannerConnection.scanFile(
+                context,
+                arrayOf(file.absolutePath),
+                if (mimeType != null) arrayOf(mimeType) else null,
+                null
+            )
+        } catch (_: Exception) {}
+    }
+
     fun openFile(context: Context, file: File, mimeType: String = "*/*") {
         try {
             val uri = FileProvider.getUriForFile(

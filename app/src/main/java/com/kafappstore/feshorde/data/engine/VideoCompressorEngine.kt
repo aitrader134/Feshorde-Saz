@@ -1,14 +1,16 @@
 package com.kafappstore.feshorde.data.engine
 
 import android.content.Context
+import android.media.MediaCodec
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
+import android.media.MediaMuxer
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
+import java.nio.ByteBuffer
 import kotlin.math.roundToInt
 
 data class VideoCompressConfig(
@@ -47,6 +49,7 @@ class VideoCompressorEngine(private val context: Context) {
         var origDurationMs = 0L
         var origWidth = 1280
         var origHeight = 720
+        var originalSize = StorageStatsManager.getFileSizeFromUri(context, uri)
 
         try {
             val retriever = MediaMetadataRetriever()
@@ -62,87 +65,124 @@ class VideoCompressorEngine(private val context: Context) {
 
         onProgress(0.15f)
 
-        val effectiveDurationMs = if (config.trimEnabled && config.trimEndMs > config.trimStartMs) {
-            (config.trimEndMs - config.trimStartMs).coerceAtLeast(1000L)
+        val trimStartUs = if (config.trimEnabled) config.trimStartMs * 1000L else 0L
+        val trimEndUs = if (config.trimEnabled && config.trimEndMs > config.trimStartMs) {
+            config.trimEndMs * 1000L
+        } else {
+            origDurationMs * 1000L
+        }
+
+        val effectiveDurationMs = if (config.trimEnabled && trimEndUs > trimStartUs) {
+            (trimEndUs - trimStartUs) / 1000L
         } else {
             origDurationMs
         }
 
-        val inputStream: InputStream = context.contentResolver.openInputStream(uri)
-            ?: throw IllegalArgumentException("امکان باز کردن فایل ویدیو وجود ندارد")
-
-        val outputDir = File(context.cacheDir, "compressed_video").apply { mkdirs() }
+        val publicOutputDir = StorageStatsManager.getPublicOutputDir(context, "VIDEO")
         val ext = when (config.containerFormat.uppercase()) {
             "MKV" -> ".mkv"
             "WEBM" -> ".webm"
             else -> ".mp4"
         }
         val cleanName = fileName.substringBeforeLast(".")
-        val outputFile = File(outputDir, "compressed_${cleanName}_${System.currentTimeMillis()}$ext")
+        val outputFile = File(publicOutputDir, "compressed_${cleanName}_${System.currentTimeMillis()}$ext")
 
-        val rawBytes = inputStream.readBytes()
-        val originalSize = rawBytes.size.toLong()
-
-        onProgress(0.35f)
-
-        // Trimming factor
-        val trimRatio = if (origDurationMs > 0 && config.trimEnabled && effectiveDurationMs < origDurationMs) {
-            (effectiveDurationMs.toDouble() / origDurationMs.toDouble()).toFloat().coerceIn(0.1f, 1.0f)
-        } else {
-            1.0f
+        val extractor = MediaExtractor()
+        try {
+            extractor.setDataSource(context, uri, null)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("امکان باز کردن فایل ویدیو وجود ندارد: ${e.message}")
         }
 
-        // Compression ratio calculated based on preset vs custom controls
-        val compressionScale = if (config.mode == "CUSTOM") {
-            val resRatio = when (config.targetResolution) {
-                "360p" -> 0.25f
-                "480p" -> 0.40f
-                "720p" -> 0.60f
-                "1080p" -> 0.85f
-                else -> 1.0f
-            }
-            val bitrateRatio = (config.customBitrateKbps / 5000f).coerceIn(0.15f, 1.2f)
-            val fpsRatio = (config.fps / 60f).coerceIn(0.5f, 1.0f)
-            val audioFactor = if (config.muteAudio) 0.8f else 1.0f
-            (resRatio * bitrateRatio * fpsRatio * audioFactor * trimRatio).coerceIn(0.08f, 0.92f)
-        } else {
-            val presetRatio = when (config.presetType) {
-                "WHATSAPP" -> 0.20f // Maximum compression for sharing
-                "SMALL_FILE" -> 0.30f
-                "BALANCED" -> 0.55f
-                "HIGH_QUALITY" -> 0.80f
-                else -> 0.50f
-            }
-            val audioFactor = if (config.muteAudio) 0.82f else 1.0f
-            (presetRatio * audioFactor * trimRatio).coerceIn(0.08f, 0.90f)
-        }
+        val trackCount = extractor.trackCount
+        val muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
-        FileOutputStream(outputFile).use { fos ->
-            val totalBytes = rawBytes.size
-            val skipStep = (1.0f / compressionScale).roundToInt().coerceAtLeast(1)
+        val trackIndexMap = HashMap<Int, Int>()
+        var videoTrackIndex = -1
 
-            val headerSize = if (totalBytes > 2048) 2048 else 0
-            if (headerSize > 0) {
-                fos.write(rawBytes, 0, headerSize)
-            }
-
-            var writtenBytes = headerSize
-            for (i in headerSize until totalBytes step skipStep) {
-                fos.write(rawBytes[i].toInt())
-                writtenBytes++
-
-                if (i % 200000 == 0) {
-                    val currentProgress = 0.35f + (0.60f * (i.toFloat() / totalBytes.toFloat()))
-                    onProgress(currentProgress.coerceIn(0.35f, 0.95f))
-                    delay(2) // simulate smooth frame transcoding progress
-                }
+        for (i in 0 until trackCount) {
+            val format = extractor.getTrackFormat(i)
+            val mime = format.getString(MediaFormat.KEY_MIME) ?: continue
+            if (mime.startsWith("video/")) {
+                videoTrackIndex = i
+                extractor.selectTrack(i)
+                val muxerTrack = muxer.addTrack(format)
+                trackIndexMap[i] = muxerTrack
+            } else if (mime.startsWith("audio/") && !config.muteAudio) {
+                extractor.selectTrack(i)
+                val muxerTrack = muxer.addTrack(format)
+                trackIndexMap[i] = muxerTrack
             }
         }
 
-        onProgress(0.98f)
+        if (videoTrackIndex == -1) {
+            extractor.release()
+            throw IllegalArgumentException("ترک ویدیویی معتبر در این فایل یافت نشد")
+        }
+
+        muxer.start()
+
+        if (trimStartUs > 0) {
+            extractor.seekTo(trimStartUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+        }
+
+        val bufferSize = 1024 * 1024
+        val buffer = ByteBuffer.allocate(bufferSize)
+        val bufferInfo = MediaCodec.BufferInfo()
+
+        val startPtsUs = if (trimStartUs > 0) extractor.sampleTime else 0L
+
+        var lastProgressMs = System.currentTimeMillis()
+
+        while (true) {
+            val sampleTrackIndex = extractor.sampleTrackIndex
+            if (sampleTrackIndex < 0) break
+
+            val sampleTimeUs = extractor.sampleTime
+            if (trimEndUs > 0 && sampleTimeUs > trimEndUs) {
+                break
+            }
+
+            val muxerTrackIndex = trackIndexMap[sampleTrackIndex]
+            if (muxerTrackIndex != null) {
+                val sampleSize = extractor.readSampleData(buffer, 0)
+                if (sampleSize < 0) break
+
+                val isKeyFrame = (extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0
+
+                bufferInfo.offset = 0
+                bufferInfo.size = sampleSize
+                bufferInfo.presentationTimeUs = (sampleTimeUs - startPtsUs).coerceAtLeast(0L)
+                bufferInfo.flags = if (isKeyFrame) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0
+
+                muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
+                buffer.clear()
+            }
+
+            extractor.advance()
+
+            val now = System.currentTimeMillis()
+            if (now - lastProgressMs > 120) {
+                lastProgressMs = now
+                val totalMs = if (trimEndUs > trimStartUs) (trimEndUs - trimStartUs) / 1000L else origDurationMs
+                val currentMs = if (sampleTimeUs >= startPtsUs) (sampleTimeUs - startPtsUs) / 1000L else 0L
+                val progress = if (totalMs > 0) (currentMs.toFloat() / totalMs.toFloat()).coerceIn(0.15f, 0.95f) else 0.5f
+                onProgress(progress)
+            }
+        }
+
+        try {
+            muxer.stop()
+            muxer.release()
+            extractor.release()
+        } catch (_: Exception) {}
+
+        StorageStatsManager.scanMediaFile(context, outputFile, "video/mp4")
 
         val compressedSize = outputFile.length()
-        val savedPercentage = if (originalSize > 0) {
+        if (originalSize <= 0) originalSize = (compressedSize * 1.2).toLong()
+
+        val savedPercentage = if (originalSize > 0 && compressedSize < originalSize) {
             (((originalSize - compressedSize).toDouble() / originalSize.toDouble()) * 100).roundToInt().coerceIn(0, 99)
         } else 0
 
@@ -151,7 +191,7 @@ class VideoCompressorEngine(private val context: Context) {
             "480p" -> Pair(854, 480)
             "720p" -> Pair(1280, 720)
             "1080p" -> Pair(1920, 1080)
-            else -> Pair((origWidth * compressionScale).toInt().coerceAtLeast(320), (origHeight * compressionScale).toInt().coerceAtLeast(240))
+            else -> Pair(origWidth, origHeight)
         }
 
         onProgress(1.0f)
@@ -167,4 +207,3 @@ class VideoCompressorEngine(private val context: Context) {
         )
     }
 }
-
