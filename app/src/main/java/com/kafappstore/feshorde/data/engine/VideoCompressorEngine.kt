@@ -93,19 +93,15 @@ class VideoCompressorEngine(private val context: Context) {
         val cleanName = fileName.substringBeforeLast(".")
         val outputFile = File(publicOutputDir, "compressed_${cleanName}_${System.currentTimeMillis()}$ext")
 
-        val isPortrait = rotation == 90 || rotation == 270
-
-        val rawW = if (isPortrait) origHeight else origWidth
-        val rawH = if (isPortrait) origWidth else origHeight
-
-        // Calculate target dimensions keeping aspect ratio
+        // Calculate target dimensions keeping physical aspect ratio of video stream
+        val streamIsPortrait = origHeight > origWidth
         val (maxW, maxH) = when (config.mode) {
             "PRESET" -> when (config.presetType) {
                 "WHATSAPP" -> Pair(640, 360)
                 "SMALL_FILE" -> Pair(854, 480)
                 "BALANCED" -> Pair(1280, 720)
                 "HIGH_QUALITY" -> Pair(1920, 1080)
-                "ORIGINAL_LOW_BITRATE" -> Pair(rawW, rawH)
+                "ORIGINAL_LOW_BITRATE" -> Pair(origWidth, origHeight)
                 else -> Pair(1280, 720)
             }
             else -> when (config.targetResolution) {
@@ -113,19 +109,22 @@ class VideoCompressorEngine(private val context: Context) {
                 "480p" -> Pair(854, 480)
                 "720p" -> Pair(1280, 720)
                 "1080p" -> Pair(1920, 1080)
-                else -> Pair(rawW, rawH) // "ORIGINAL"
+                else -> Pair(origWidth, origHeight)
             }
         }
 
-        var outW = rawW
-        var outH = rawH
+        val targetMaxW = if (streamIsPortrait) minOf(maxW, maxH) else maxOf(maxW, maxH)
+        val targetMaxH = if (streamIsPortrait) maxOf(maxW, maxH) else minOf(maxW, maxH)
 
-        if (rawW > maxW || rawH > maxH) {
-            val scaleW = maxW.toFloat() / rawW.toFloat()
-            val scaleH = maxH.toFloat() / rawH.toFloat()
+        var outW = origWidth
+        var outH = origHeight
+
+        if (origWidth > targetMaxW || origHeight > targetMaxH) {
+            val scaleW = targetMaxW.toFloat() / origWidth.toFloat()
+            val scaleH = targetMaxH.toFloat() / origHeight.toFloat()
             val scale = minOf(scaleW, scaleH)
-            outW = (rawW * scale).toInt()
-            outH = (rawH * scale).toInt()
+            outW = (origWidth * scale).toInt()
+            outH = (origHeight * scale).toInt()
         }
 
         // Align dimensions to 16-pixel macroblock boundaries to prevent green/pink chroma buffer corruption
@@ -162,6 +161,7 @@ class VideoCompressorEngine(private val context: Context) {
                 trimStartUs = trimStartUs,
                 trimEndUs = trimEndUs,
                 effectiveDurationMs = effectiveDurationMs,
+                rotation = rotation,
                 engineMode = config.engineMode,
                 onProgress = onProgress
             )
@@ -171,7 +171,7 @@ class VideoCompressorEngine(private val context: Context) {
 
         if (!transcodeSuccess || !outputFile.exists() || outputFile.length() == 0L) {
             // Fallback pass if hardware encoding encountered unexpected error
-            fallbackCopyPass(uri, outputFile, config.muteAudio, trimStartUs, trimEndUs)
+            fallbackCopyPass(uri, outputFile, config.muteAudio, trimStartUs, trimEndUs, rotation)
         }
 
         StorageStatsManager.scanMediaFile(context, outputFile, "video/mp4")
@@ -207,6 +207,7 @@ class VideoCompressorEngine(private val context: Context) {
         trimStartUs: Long,
         trimEndUs: Long,
         effectiveDurationMs: Long,
+        rotation: Int,
         engineMode: String,
         onProgress: (Float) -> Unit
     ): Boolean {
@@ -259,9 +260,18 @@ class VideoCompressorEngine(private val context: Context) {
 
         val decoder = MediaCodec.createDecoderByType(videoMime)
         decoder.configure(videoFormat, inputSurface, null, 0)
+        try {
+            decoder.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT)
+        } catch (_: Exception) {}
         decoder.start()
 
         val muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        if (rotation != 0) {
+            try {
+                muxer.setOrientationHint(rotation)
+            } catch (_: Exception) {}
+        }
+
         var muxerVideoTrack = -1
         var muxerAudioTrack = -1
         var muxerStarted = false
@@ -315,8 +325,7 @@ class VideoCompressorEngine(private val context: Context) {
                         encoder.signalEndOfInputStream()
                     }
                     if (render) {
-                        val renderTimestampNs = bufferInfo.presentationTimeUs * 1000L
-                        decoder.releaseOutputBuffer(outIndex, renderTimestampNs)
+                        decoder.releaseOutputBuffer(outIndex, true)
                     } else {
                         decoder.releaseOutputBuffer(outIndex, false)
                     }
@@ -411,11 +420,17 @@ class VideoCompressorEngine(private val context: Context) {
         outputFile: File,
         muteAudio: Boolean,
         trimStartUs: Long,
-        trimEndUs: Long
+        trimEndUs: Long,
+        rotation: Int = 0
     ) {
         val extractor = MediaExtractor()
         extractor.setDataSource(context, uri, null)
         val muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        if (rotation != 0) {
+            try {
+                muxer.setOrientationHint(rotation)
+            } catch (_: Exception) {}
+        }
 
         val trackIndexMap = HashMap<Int, Int>()
         for (i in 0 until extractor.trackCount) {
