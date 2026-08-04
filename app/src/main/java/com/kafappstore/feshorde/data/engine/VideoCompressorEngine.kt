@@ -95,26 +95,39 @@ class VideoCompressorEngine(private val context: Context) {
 
         val isPortrait = rotation == 90 || rotation == 270
 
-        // Calculate target dimensions
-        var (baseW, baseH) = when (config.targetResolution) {
-            "360p" -> Pair(640, 360)
-            "480p" -> Pair(854, 480)
-            "720p" -> Pair(1280, 720)
-            "1080p" -> Pair(1920, 1080)
-            else -> Pair(origWidth, origHeight)
-        }
+        val rawW = if (isPortrait) origHeight else origWidth
+        val rawH = if (isPortrait) origWidth else origHeight
 
-        if (config.mode == "PRESET") {
-            when (config.presetType) {
-                "WHATSAPP" -> { baseW = 640; baseH = 360 }
-                "SMALL_FILE" -> { baseW = 854; baseH = 480 }
-                "BALANCED" -> { baseW = 1280; baseH = 720 }
-                "HIGH_QUALITY" -> { baseW = 1920; baseH = 1080 }
+        // Calculate target dimensions keeping aspect ratio
+        val (maxW, maxH) = when (config.mode) {
+            "PRESET" -> when (config.presetType) {
+                "WHATSAPP" -> Pair(640, 360)
+                "SMALL_FILE" -> Pair(854, 480)
+                "BALANCED" -> Pair(1280, 720)
+                "HIGH_QUALITY" -> Pair(1920, 1080)
+                "ORIGINAL_LOW_BITRATE" -> Pair(rawW, rawH)
+                else -> Pair(1280, 720)
+            }
+            else -> when (config.targetResolution) {
+                "360p" -> Pair(640, 360)
+                "480p" -> Pair(854, 480)
+                "720p" -> Pair(1280, 720)
+                "1080p" -> Pair(1920, 1080)
+                else -> Pair(rawW, rawH) // "ORIGINAL"
             }
         }
 
-        var outW = if (isPortrait) baseH else baseW
-        var outH = if (isPortrait) baseW else baseH
+        var outW = rawW
+        var outH = rawH
+
+        if (rawW > maxW || rawH > maxH) {
+            val scaleW = maxW.toFloat() / rawW.toFloat()
+            val scaleH = maxH.toFloat() / rawH.toFloat()
+            val scale = minOf(scaleW, scaleH)
+            outW = (rawW * scale).toInt()
+            outH = (rawH * scale).toInt()
+        }
+
         outW = ((outW / 2) * 2).coerceAtLeast(16)
         outH = ((outH / 2) * 2).coerceAtLeast(16)
 
@@ -123,11 +136,12 @@ class VideoCompressorEngine(private val context: Context) {
             (config.customBitrateKbps * 1000).coerceAtLeast(200_000)
         } else {
             when (config.presetType) {
-                "WHATSAPP" -> 600_000
-                "SMALL_FILE" -> 1_000_000
+                "WHATSAPP" -> 650_000
+                "SMALL_FILE" -> 1_100_000
                 "BALANCED" -> 2_200_000
-                "HIGH_QUALITY" -> 4_000_000
-                else -> 1_800_000
+                "HIGH_QUALITY" -> 4_500_000
+                "ORIGINAL_LOW_BITRATE" -> 900_000
+                else -> 2_000_000
             }
         }
 

@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Compress
 import androidx.compose.material.icons.filled.ContentCut
@@ -566,17 +568,19 @@ fun VideoCompressorScreen(
 
                                 val presets = if (isEn) {
                                     listOf(
-                                        Triple("WHATSAPP", "📱 Social Media / WhatsApp", "Maximum compression for fast messaging sharing"),
-                                        Triple("SMALL_FILE", "📁 Small File Size", "Low resolution (480p) for storage saving"),
-                                        Triple("BALANCED", "⚖️ Balanced (Recommended)", "HD 720p with great visual balance"),
-                                        Triple("HIGH_QUALITY", "🎬 High Quality 1080p", "Full HD resolution with maximum clarity")
+                                        Triple("WHATSAPP", "📱 Social Media / WhatsApp", "Maximum size reduction (~650 Kbps, 360p)"),
+                                        Triple("SMALL_FILE", "📁 Small File Size", "Low resolution (~1.1 Mbps, 480p)"),
+                                        Triple("BALANCED", "⚖️ Balanced (Recommended)", "HD 720p with great clarity (~2.2 Mbps)"),
+                                        Triple("HIGH_QUALITY", "🎬 High Quality 1080p", "Full HD resolution (~4.5 Mbps)"),
+                                        Triple("ORIGINAL_LOW_BITRATE", "💎 Keep Resolution (Low Bitrate)", "Preserves original resolution with low bitrate (~900 Kbps)")
                                     )
                                 } else {
                                     listOf(
-                                        Triple("WHATSAPP", "📱 ارسال پیام‌رسان (واتساپ / ایتا)", "حداکثر فشرده‌سازی جهت ارسال سریع"),
-                                        Triple("SMALL_FILE", "📁 فایل فوق‌العاده کوچک", "رزولوشن ۴۸۰p جهت بیشترین آزادسازی حافظه"),
-                                        Triple("BALANCED", "⚖️ متعادل و استاندارد (پیشنهادی)", "رزولوشن HD ۷۲۰p با تعادل عالی تصویر و حجم"),
-                                        Triple("HIGH_QUALITY", "🎬 کیفیت بالا (1080p)", "کیفیت و رزولوشن اصلی با شفافیت بالاو کاهش حجم")
+                                        Triple("WHATSAPP", "📱 ارسال پیام‌رسان (واتساپ / ایتا)", "حداکثر فشرده‌سازی جهت ارسال سریع (~650 Kbps)"),
+                                        Triple("SMALL_FILE", "📁 فایل فوق‌العاده کوچک", "رزولوشن ۴۸۰p جهت بیشترین آزادسازی حافظه (~1.1 Mbps)"),
+                                        Triple("BALANCED", "⚖️ متعادل و استاندارد (پیشنهادی)", "رزولوشن HD ۷۲۰p با تعادل عالی تصویر و حجم (~2.2 Mbps)"),
+                                        Triple("HIGH_QUALITY", "🎬 کیفیت بالا (1080p)", "کیفیت و رزولوشن اصلی با شفافیت بالا (~4.5 Mbps)"),
+                                        Triple("ORIGINAL_LOW_BITRATE", "💎 حفظ رزولوشن اصلی (بیت‌ریت پایین)", "نگه‌داشتن ابعاد کامل ویدیو با بیت‌ریت پایین (~900 Kbps)")
                                     )
                                 }
 
@@ -814,7 +818,125 @@ fun VideoCompressorScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Estimated Output Size & Calculation Preview Card
+                    val estimatedBitrateKbps = if (selectedModeTab == 0) {
+                        when (presetType) {
+                            "WHATSAPP" -> 650
+                            "SMALL_FILE" -> 1100
+                            "BALANCED" -> 2200
+                            "HIGH_QUALITY" -> 4500
+                            "ORIGINAL_LOW_BITRATE" -> 900
+                            else -> 2000
+                        }
+                    } else {
+                        customBitrateKbps.toInt()
+                    }
+
+                    val effectiveSec = if (isTrimEnabled && trimEndSec > trimStartSec) {
+                        (trimEndSec - trimStartSec).toDouble()
+                    } else {
+                        (videoDurationMs / 1000.0)
+                    }
+
+                    val estimatedAudioKbps = if (muteAudio) 0 else 128
+                    val totalEstimatedKbps = estimatedBitrateKbps + estimatedAudioKbps
+                    val rawEstBytes = if (effectiveSec > 0) ((totalEstimatedKbps * 1000.0 / 8.0) * effectiveSec).toLong() else (selectedVideoSize * 0.4).toLong()
+                    val estimatedSizeBytes = rawEstBytes.coerceAtMost((selectedVideoSize * 0.95).toLong()).coerceAtLeast(150_000L)
+
+                    val estimatedSavedPercent = if (selectedVideoSize > 0 && estimatedSizeBytes < selectedVideoSize) {
+                        (((selectedVideoSize - estimatedSizeBytes).toDouble() / selectedVideoSize.toDouble()) * 100).toInt().coerceIn(1, 99)
+                    } else 0
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = RoyalBlue.copy(alpha = 0.08f)),
+                        border = BorderStroke(1.5.dp, RoyalBlue.copy(alpha = 0.3f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Analytics,
+                                        contentDescription = null,
+                                        tint = RoyalBlue,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Text(
+                                        text = if (isEn) "Estimated Result:" else "تخمین حجم فایل خروجی:",
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = Color(0xFF006A60),
+                                ) {
+                                    Text(
+                                        text = if (isEn) "~$estimatedSavedPercent% Reduction" else "~$estimatedSavedPercent٪ کاهش حجم",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = if (isEn) "Original Size" else "حجم فعلی",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = LanguageManager.formatBytes(selectedVideoSize),
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint = RoyalBlue,
+                                    modifier = Modifier.size(24.dp)
+                                )
+
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = if (isEn) "Est. Output" else "حجم تخمینی خروجی",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = LanguageManager.formatBytes(estimatedSizeBytes),
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = RoyalBlue
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Start Compression Button
                     Button(
