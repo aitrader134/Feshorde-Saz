@@ -24,7 +24,8 @@ data class VideoCompressConfig(
     val containerFormat: String = "MP4", // MP4, MKV, WEBM
     val trimEnabled: Boolean = false,
     val trimStartMs: Long = 0L,
-    val trimEndMs: Long = 0L
+    val trimEndMs: Long = 0L,
+    val engineMode: String = "TURBO" // "TURBO" (Ultra Fast) or "STANDARD"
 )
 
 data class VideoCompressResult(
@@ -146,6 +147,7 @@ class VideoCompressorEngine(private val context: Context) {
                 trimStartUs = trimStartUs,
                 trimEndUs = trimEndUs,
                 effectiveDurationMs = effectiveDurationMs,
+                engineMode = config.engineMode,
                 onProgress = onProgress
             )
         } catch (_: Exception) {
@@ -190,6 +192,7 @@ class VideoCompressorEngine(private val context: Context) {
         trimStartUs: Long,
         trimEndUs: Long,
         effectiveDurationMs: Long,
+        engineMode: String,
         onProgress: (Float) -> Unit
     ): Boolean {
         val extractor = MediaExtractor()
@@ -224,7 +227,15 @@ class VideoCompressorEngine(private val context: Context) {
         encoderFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
         encoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, targetBitrate)
         encoderFormat.setInteger(MediaFormat.KEY_FRAME_RATE, targetFps)
-        encoderFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+        encoderFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, if (engineMode == "TURBO") 2 else 1)
+
+        if (engineMode == "TURBO") {
+            try {
+                encoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, 32767)
+                encoderFormat.setInteger(MediaFormat.KEY_PRIORITY, 0)
+                encoderFormat.setInteger(MediaFormat.KEY_COMPLEXITY, 0)
+            } catch (_: Exception) {}
+        }
 
         val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
         encoder.configure(encoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)

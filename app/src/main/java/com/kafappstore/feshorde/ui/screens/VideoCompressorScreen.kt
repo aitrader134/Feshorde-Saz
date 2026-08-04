@@ -98,6 +98,9 @@ fun VideoCompressorScreen(
     // Mode tab: 0 = Presets, 1 = Advanced Custom
     var selectedModeTab by remember { mutableIntStateOf(0) }
 
+    // Engine mode: "TURBO" (Ultra Fast Hardware) or "STANDARD" (Compatible)
+    var engineMode by remember { mutableStateOf("TURBO") }
+
     // Preset selection: WHATSAPP, SMALL_FILE, BALANCED, HIGH_QUALITY
     var presetType by remember { mutableStateOf("BALANCED") }
 
@@ -375,6 +378,109 @@ fun VideoCompressorScreen(
                                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                                             color = RoyalBlue,
                                             modifier = Modifier.padding(10.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Compression Engine Selector (Turbo Speed vs Standard)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Speed,
+                                    contentDescription = null,
+                                    tint = OrangeToolIcon,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = if (isEn) "Processing Engine Mode:" else "انتخاب موتور پردازش فشرده‌سازی:",
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (isEn) "Choose hardware speed engine vs compatible mode" else "انتخاب موتور سخت‌افزاری توربو یا حالت استاندارد",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                // Turbo Button
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (engineMode == "TURBO") OrangeToolIcon.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                    border = BorderStroke(
+                                        width = if (engineMode == "TURBO") 2.dp else 1.dp,
+                                        color = if (engineMode == "TURBO") OrangeToolIcon else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { engineMode = "TURBO" }
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = if (isEn) "🚀 Turbo Speed" else "🚀 توربو (فوق سریع)",
+                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                            color = if (engineMode == "TURBO") OrangeToolIcon else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = if (isEn) "Max GPU Acceleration" else "حداکثر شتاب سخت‌افزاری",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                // Standard Button
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (engineMode == "STANDARD") RoyalBlue.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                    border = BorderStroke(
+                                        width = if (engineMode == "STANDARD") 2.dp else 1.dp,
+                                        color = if (engineMode == "STANDARD") RoyalBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { engineMode = "STANDARD" }
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = if (isEn) "⚖️ Standard Mode" else "⚖️ حالت استاندارد",
+                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                            color = if (engineMode == "STANDARD") RoyalBlue else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = if (isEn) "Broad Compatibility" else "سازگاری استاندارد",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -725,7 +831,8 @@ fun VideoCompressorScreen(
                                 containerFormat = containerFormat,
                                 trimEnabled = isTrimEnabled,
                                 trimStartMs = (trimStartSec * 1000f).toLong(),
-                                trimEndMs = (trimEndSec * 1000f).toLong()
+                                trimEndMs = (trimEndSec * 1000f).toLong(),
+                                engineMode = engineMode
                             )
                             onCompressVideo(uri, config)
                         },
